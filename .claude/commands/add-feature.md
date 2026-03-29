@@ -14,20 +14,24 @@
 
 ---
 
-## フェーズ 1: タスクノート初期化
+## フェーズ 1: タスクノート初期化・プロダクト要件定義
 
 `$ARGUMENTS` が空の場合は「どのような機能を追加しますか？（例: アーティスト詳細画面の追加）」と確認してから進む。
 
-1. `.steering/tasks/` 以下に既存のディレクトリがあれば一覧を表示し、「過去のタスクログを削除しますか？」と確認する。「はい」の場合は `.steering/tasks/` 以下のディレクトリをすべて削除する。
-2. タスクディレクトリパスを決定する
-   - 形式: `.steering/tasks/YYYY-MM-DD_<kebab-case-name>/`
-2. TodoWrite でタスクを登録する:
-   - [ ] 並列探索: KMP側・iOS側の調査
-   - [ ] 計画: planner エージェントによる計画立案・ユーザー承認
-   - [ ] 並列実装: KMP側・iOS側・Android側の同時実装
-   - [ ] テスト: ユニットテストの確認・追加
-   - [ ] レビュー: reviewer エージェントによるレビュー
-   - [ ] コミット
+[`docs/workflow-overview.md` の共通フェーズ定義（フェーズ1）](../../docs/workflow-overview.md#共通フェーズ定義) の手順1〜2を実行する。続いて以下のタスクを TodoWrite で登録する:
+- [ ] プロダクト要件定義・ドキュメント雛形生成
+- [ ] 並列探索: KMP側・iOS側の調査
+- [ ] 計画: planner エージェントによる計画立案・ユーザー承認
+- [ ] 並列実装: KMP側・iOS側・Android側の同時実装
+- [ ] テスト: ユニットテストの確認・追加
+- [ ] レビュー: reviewer エージェントによるレビュー・仕様書更新
+- [ ] コミット
+
+その後、以下を実行する:
+1. `docs/feature/<feature-name>/products-requirement.md` の存在を確認する。
+   - **存在しない場合**: 「`products-requirement.md` を作成してください。目的・ユーザーストーリー・表示コンテンツ・UX フローを記載します。作成後にお知らせください。」とユーザーに依頼して待機する
+   - **存在する場合**: そのまま次のステップへ
+2. `.claude/skills/gen-feature-doc/SKILL.md` の手順に従い、`products-requirement.md` を元に `ios.md` / `android.md` / `testcase.md` の雛形を作成する（既存ファイルがある場合は差分更新）
 
 ---
 
@@ -79,16 +83,7 @@ Agent ツールで `planner` エージェントを起動する:
 ```
 
 完了後 `plan.md` を Read してユーザーに提示する。
-**ユーザー承認を得てからフェーズ3.5へ進む。**（plan.md はフェーズ4・5のエージェントの唯一の仕様書になる）
-
----
-
-## フェーズ 3.5: 機能仕様書の作成（feature-doc スキル）
-
-`docs/feature/<feature-name>/ios.md` および `docs/feature/<feature-name>/android.md` の存在を確認する。
-
-- **ファイルが存在しない場合**: `.claude/skills/feature-doc/SKILL.md` の手順に従い新規作成する。`plan.md` の UiState・ViewModelInterface 定義を情報源にする
-- **ファイルが既に存在する場合**: 内容を Read してユーザーに提示し、「仕様書が既に存在します。上書き更新しますか？それともスキップしますか？」と確認してから進む
+**ユーザー承認を得てからフェーズ4へ進む。**（plan.md はフェーズ4・5のエージェントの唯一の仕様書になる）
 
 ---
 
@@ -107,7 +102,7 @@ plan.md: .steering/tasks/<dir>/plan.md
 ```
 plan.md: .steering/tasks/<dir>/plan.md
 出力先: .steering/tasks/<dir>/implementation-ios.md
-担当: iOS側（.claude/skills/new-screen/SKILL.md のパターンを使い、IosXxxViewModel / XxxScreen / AppDestination を実装）
+担当: iOS側（IosXxxViewModel / XxxScreen / AppDestination を実装）
 ※ plan.md のインターフェース仕様を参照して実装すること
 ```
 
@@ -125,20 +120,15 @@ plan.md: .steering/tasks/<dir>/plan.md
 
 ## フェーズ 5: テスト確認
 
-ユーザーに以下のコマンドの実行を依頼する:
+[`docs/workflow-overview.md` の共通フェーズ定義（フェーズ5）](../../docs/workflow-overview.md#共通フェーズ定義) に従って実行する。
 
-```
-./gradlew :shared:ui-model:test
-```
-
-失敗があれば結果を共有してもらい、メインエージェントが直接修正する（KMP/iOS の区別なく対処）。修正後に再度実行を依頼する。
-テスト完了後、結果（合格/失敗件数・失敗内容の要約）を `.steering/tasks/<dir>/test-result.md` に書き出す。
+iOS テストは Xcode で別途確認する。
 
 ---
 
 ## フェーズ 6〜8: レビュー・コミット・PR
 
-[`docs/workflow-overview.md` の共通フェーズ定義](../../../docs/workflow-overview.md#共通フェーズ定義フェーズ-68)に従って実行する。
+[`docs/workflow-overview.md` の共通フェーズ定義](../../docs/workflow-overview.md#共通フェーズ定義)に従って実行する。
 
 - **ブランチ prefix**: `feature/`（例: `feature/artist-detail-screen`）
 - **commit type**: `feat`

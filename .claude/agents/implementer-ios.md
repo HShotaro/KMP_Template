@@ -12,7 +12,7 @@ KMP エージェントと並列で動作するため、`iosApp/` のみを扱い
 
 ## 担当範囲
 
-- `iosApp/iosApp/viewModel/` — iOS ViewModel ラッパー
+- `iosApp/iosApp/ViewModel/` — iOS ViewModel ラッパー
 - `iosApp/iosApp/View/Screen/` — iOS Screen
 - `iosApp/iosApp/Route/AppDestination.swift` — ナビゲーション追加
 

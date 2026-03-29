@@ -37,8 +37,10 @@
 | `simplify` | コードの再利用性・品質・効率の改善 | [SKILL.md](../.claude/skills/simplify/SKILL.md) |
 | `arch-patterns` | アーキテクチャパターン早見表 | [SKILL.md](../.claude/skills/arch-patterns/SKILL.md) |
 | `feature-specs` | 機能ドキュメントへのインデックス | [SKILL.md](../.claude/skills/feature-specs/SKILL.md) |
-| `feature-doc` | `docs/feature/` 配下の機能仕様書の作成・更新 | [SKILL.md](../.claude/skills/feature-doc/SKILL.md) |
+| `gen-feature-doc` | `products-requirement.md` から技術仕様ドキュメント（`ios.md` / `android.md` / `testcase.md`）の雛形生成 | [SKILL.md](../.claude/skills/gen-feature-doc/SKILL.md) |
+| `update-feature-doc` | `docs/feature/` 配下の機能仕様書の更新 | [SKILL.md](../.claude/skills/update-feature-doc/SKILL.md) |
 | `test-specs` | KMP・iOS ユニットテスト仕様ガイド | [SKILL.md](../.claude/skills/test-specs/SKILL.md) |
+| `create-issue` | GitHub Issue の作成 | [SKILL.md](../.claude/skills/create-issue/SKILL.md) |
 
 ---
 

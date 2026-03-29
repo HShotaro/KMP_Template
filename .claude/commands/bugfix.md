@@ -17,20 +17,20 @@
 
 `$ARGUMENTS` が空の場合は「バグの症状と再現手順を教えてください（例: HomeScreen で初回起動時に楽曲一覧が空のまま表示される）」と確認してから進む。
 
-1. `.steering/tasks/` 以下に既存のディレクトリがあれば一覧を表示し、「過去のタスクログを削除しますか？」と確認する。「はい」の場合は `.steering/tasks/` 以下のディレクトリをすべて削除する。
-2. タスクディレクトリパスを決定する
-   - 形式: `.steering/tasks/YYYY-MM-DD_<kebab-case-name>/`
-2. TodoWrite でタスクを登録する:
-   - [ ] 調査: バグの根本原因の特定
-   - [ ] 計画: 修正方針の決定・ユーザー承認
-   - [ ] 実装: 最小変更での修正
-   - [ ] テスト: 修正の検証・テスト追加
-   - [ ] レビュー: 実装の観点レビュー
-   - [ ] コミット
+[`docs/workflow-overview.md` の共通フェーズ定義（フェーズ1）](../../docs/workflow-overview.md#共通フェーズ定義) の手順1〜2を実行する。続いて以下のタスクを TodoWrite で登録する:
+- [ ] 調査: バグの根本原因の特定
+- [ ] 計画: 修正方針の決定・ユーザー承認
+- [ ] 実装: 最小変更での修正
+- [ ] 動作確認: ユーザーによる実機確認
+- [ ] テスト: 修正の検証・テスト追加
+- [ ] レビュー: 実装の観点レビュー
+- [ ] コミット
 
 ---
 
-## フェーズ 2: 並列調査（bug-investigator × explorer）
+## フェーズ 2: 並列調査（bug-investigator × explorer）＋ 仮説検証ループ
+
+### iteration 1: 初回並列調査
 
 **Agent ツールで2つのエージェントを同時に起動する。**
 
@@ -38,6 +38,7 @@
 ```
 バグの症状: $ARGUMENTS
 出力先: .steering/tasks/<dir>/exploration.md
+根本原因の仮説を複数列挙し、各仮説の確信度（高/中/低）を明記すること
 ```
 
 **エージェント B** — `explorer`:
@@ -49,7 +50,21 @@
       Android（composeApp）への波及
 ```
 
-両エージェント完了後、`exploration.md` と `exploration-impact.md` を Read してフェーズ3へ。
+### iteration 2: 仮説検証（不確定な場合のみ）
+
+`exploration.md` を Read して、確信度「高」の仮説が1つに絞り込まれているかを確認する。
+
+- **絞り込まれている場合**: フェーズ3へ進む
+- **複数の仮説が残っている（確信度「高」が複数 or 最高が「中」）場合**:
+  `explorer` エージェントを再起動し、各仮説を裏付ける・否定するコードを具体的に特定させる:
+  ```
+  タスク: 以下の仮説A/Bのどちらが正しいかを、コードを読んで確定させる
+    仮説: [exploration.md の仮説リストをここに貼る]
+  出力先: .steering/tasks/<dir>/exploration-hypothesis.md
+  ```
+  完了後 `exploration-hypothesis.md` を Read し、根本原因を1つに確定する（最大 iteration 3 まで。それ以上は仮説を列挙したままフェーズ3へ進む）。
+
+両エージェント（+ 仮説検証）完了後、フェーズ3へ。
 
 ---
 
@@ -61,6 +76,7 @@ Agent ツールで `planner` エージェントを起動する:
 探索ファイル:
   - .steering/tasks/<dir>/exploration.md
   - .steering/tasks/<dir>/exploration-impact.md
+  - .steering/tasks/<dir>/exploration-hypothesis.md（存在する場合）
 出力先: .steering/tasks/<dir>/plan.md
 方針: 最小変更の原則。根本原因のみを修正し、周辺コードには手を加えない。
 ```
@@ -77,34 +93,51 @@ Agent ツールで `planner` エージェントを起動する:
 
 修正完了後、変更ファイル一覧を `.steering/tasks/<dir>/implementation.md` に書き出す。
 
+### 動作確認（ユーザー確認必須）
+
+実装完了後、以下の文言でユーザーに動作確認を依頼する:
+
+> 実装が完了しました。実機またはシミュレーターで動作確認をお願いします。
+> - 問題なし → 「問題なし」とお知らせください。フェーズ5（テスト確認）へ進みます。
+> - 問題あり → 「問題あり：[症状]」とお知らせください。実装を元に戻してフェーズ3（計画）へ戻ります。
+
+**問題ありの場合の対応:**
+
+1. `git diff --name-only HEAD` で変更ファイルを確認し、`git restore $(git diff --name-only HEAD)` で元に戻す
+2. 発覚した症状を `.steering/tasks/<dir>/exploration.md` の末尾に以下の形式で追記する:
+   ```
+   ## 動作確認フィードバック（再計画用）
+   - 試みた修正: [plan.md の修正内容の要約]
+   - 発覚した症状: [ユーザーが報告した症状]
+   - 仮定が外れた可能性: [なぜ修正が効かなかったか]
+   ```
+3. フェーズ3（計画）へ戻り、`planner` エージェントを以下のプロンプトで再起動する:
+   ```
+   探索ファイル:
+     - .steering/tasks/<dir>/exploration.md（末尾の動作確認フィードバックを含む）
+     - .steering/tasks/<dir>/exploration-impact.md
+   出力先: .steering/tasks/<dir>/plan.md
+   方針: 最小変更の原則。前回の修正方針が動作確認で否定されたため、
+         exploration.md 末尾のフィードバックを踏まえて修正方針を再検討すること。
+   ```
+
 ---
 
 ## フェーズ 5: テスト確認
 
 このバグをカバーするテストケースを追加する（再発防止のためにテストで保護する）。
 
-ユーザーに以下のコマンドの実行を依頼し、結果ログを共有してもらう:
-
-```
-./gradlew :shared:ui-model:test
-```
-
-受け取ったログに失敗があれば修正する。修正後は再度実行を依頼し、結果ログを受け取る。
-テスト完了後、結果（合格/失敗件数・失敗内容の要約）を `.steering/tasks/<dir>/test-result.md` に書き出す。
+[`docs/workflow-overview.md` の共通フェーズ定義（フェーズ5）](../../docs/workflow-overview.md#共通フェーズ定義) に従って実行する。
 
 ---
 
-## フェーズ 5.5: 機能仕様書の更新確認（feature-doc スキル）
+## フェーズ 6: レビュー
 
-バグ修正で設計上の契約（UiState・ViewModelInterface・非自明な振る舞い）が変わった場合のみ実行する。内部ロジックのみの修正はスキップしてよい。
+[`docs/workflow-overview.md` の共通フェーズ定義（フェーズ6）](../../docs/workflow-overview.md#共通フェーズ定義)に従ってレビューを実施する。
 
-変更が仕様に影響すると判断した場合、`docs/feature/<feature-name>/ios.md` または `docs/feature/<feature-name>/android.md` の存在を確認し、「仕様書を更新しますか？」とユーザーに確認してから `.claude/skills/feature-doc/SKILL.md` の手順で更新する。
+## フェーズ 7〜8: コミット・PR
 
----
-
-## フェーズ 6〜8: レビュー・コミット・PR
-
-[`docs/workflow-overview.md` の共通フェーズ定義](../../../docs/workflow-overview.md#共通フェーズ定義フェーズ-68)に従って実行する。
+[`docs/workflow-overview.md` の共通フェーズ定義（フェーズ7〜8）](../../docs/workflow-overview.md#共通フェーズ定義)に従って実行する。
 
 - **ブランチ prefix**: `fix/`（例: `fix/home-screen-empty-list`）
 - **commit type**: `fix`

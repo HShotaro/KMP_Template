@@ -1,4 +1,4 @@
-# feature-doc テンプレート
+# gen-feature-doc テンプレート
 
 ## iOS 仕様書テンプレート（`docs/feature/<feature-name>/ios.md`）
 
@@ -13,7 +13,7 @@
 ## ViewModel
 
 **KMP:** `XxxViewModel` (`shared/ui-model/`)
-**iOS ラッパー:** `IosXxxViewModel` (`iosApp/iosApp/viewModel/IosXxxViewModel.swift`)
+**iOS ラッパー:** `IosXxxViewModel` (`iosApp/iosApp/ViewModel/IosXxxViewModel.swift`)
 
 ### XxxUiState
 
@@ -139,6 +139,103 @@
 ```
 
 ---
+
+## testcase.md テンプレート（`docs/feature/<feature-name>/testcase.md`）
+
+```markdown
+# XxxScreen テストケース
+
+## KMP ユニットテスト (`:shared:ui-model`)
+
+### `XxxViewModelTest`
+
+| テスト名 | 検証内容 |
+|---|---|
+| `loadData_success_updatesState` | データ取得成功で state が更新され `isLoading == false`、`error == null` |
+| `loadData_failure_setsError` | 取得失敗時に `error` がセットされる |
+<!-- UX フローと非機能要件から正常系・異常系・エッジケースを導出する -->
+<!-- 例: -->
+<!-- | `loadData_empty_setsEmptyState` | 結果が空の場合、items が空リストのまま error はない | -->
+<!-- | `createItem_blankName_doesNothing` | 名前が空の場合は API を呼ばない | -->
+<!-- | `createItem_success_reloadsItems` | 作成成功後に loadData が1回呼ばれる | -->
+
+---
+
+## iOS ユニットテスト (`iosAppTests`)
+
+<!-- iOS 固有クラス（Manager など）がある場合のみセクションを追加する -->
+<!-- ### `XxxManagerTests` -->
+<!-- `iosApp/iosAppTests/XxxManagerTests.swift` -->
+<!-- | テスト名 | 検証内容 | -->
+<!-- |---|---| -->
+
+---
+
+## iOS UITest (`iosAppUITests`)
+
+`XxxScreenUITests.swift` — <!-- 検証概要（例: ホームタブ到達、ロード後の状態（コンテンツまたはエラー）を検証する） -->
+セットアップ・実行手順・accessibilityIdentifier 一覧は **[`docs/testing/uitest.md`](../../testing/uitest.md)** を参照。
+
+<!-- 詳細テストケースが多い場合（PlayerUITests 相当）は以下の表を追加する -->
+<!-- | テスト名 | 検証内容 | -->
+<!-- |---|---| -->
+<!-- | `testXxx_yyy` | ... | -->
+
+---
+
+## Android Compose UITest (`composeApp/androidTest`)
+
+`XxxScreenTest.kt` — <!-- 検証概要（例: ジャンルタブ表示、楽曲グリッド表示を検証する） -->
+セットアップ・実行手順・testTag 一覧は **[`docs/testing/uitest.md`](../../testing/uitest.md)** を参照。
+```
+
+---
+
+## test.md への追記テンプレート
+
+`:shared:ui-model` — `ViewModel テスト` セクションに以下を追加する:
+
+```markdown
+### `XxxViewModelTest`
+
+→ **[`docs/feature/<feature-name>/testcase.md`](../feature/<feature-name>/testcase.md)** を参照
+```
+
+---
+
+## uitest.md への追記テンプレート
+
+### iOS XCUITest テストファイル一覧への追加行
+
+```markdown
+| `XxxScreenUITests.swift` | XxxScreen | [`docs/feature/<feature-name>/testcase.md`](../feature/<feature-name>/testcase.md) |
+```
+
+### Android Compose UITest テストファイル一覧への追加行
+
+```markdown
+| `XxxScreenTest.kt` | XxxScreen | [`docs/feature/<feature-name>/testcase.md`](../feature/<feature-name>/testcase.md) |
+```
+
+### accessibilityIdentifier 一覧への追加行（iOS）
+
+```markdown
+| `xxx_loading`  | XxxScreen | ロード中インジケータ |
+| `xxx_content`  | XxxScreen | コンテンツコンテナ |
+| `xxx_empty`    | XxxScreen | 空状態コンテナ |
+| `xxx_error`    | XxxScreen | エラー状態コンテナ |
+```
+
+### testTag 一覧への追加行（Android）
+
+```markdown
+| `xxx_loading`  | XxxScreen | ロード中インジケータ |
+| `xxx_content`  | XxxScreen | コンテンツコンテナ |
+| `xxx_empty`    | XxxScreen | 空状態コンテナ |
+```
+
+---
+
 
 ## 記載判断チートシート
 

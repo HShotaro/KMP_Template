@@ -54,9 +54,10 @@ ViewModels live in `:shared:ui-model` and extend `androidx.lifecycle.ViewModel`.
 
 ### iOS Interop Patterns
 
-iOS ViewModel wrappers (`iosApp/iosApp/viewModel/`) bridge KMP `StateFlow` to `@Published` via `Task { @MainActor }`. ドメインエンティティは `SharedIdentifiable` / `SharedSendable` を実装して KMP 境界を越える。
+iOS ViewModel wrappers (`iosApp/iosApp/ViewModel/`) bridge KMP `StateFlow` to `@Published` via `Task { @MainActor }`. ドメインエンティティは `SharedIdentifiable` / `SharedSendable` を実装して KMP 境界を越える。
 
-iOS ViewModel のボイラープレートは `HSMacro`（SPM）の Swift Macro で自動生成する。詳細は **[`.claude/skills/arch-patterns/SKILL.md`](.claude/skills/arch-patterns/SKILL.md)** を参照。
+iOS ViewModel のボイラープレートは `HSMacro`（SPM）の Swift Macro で自動生成する。詳細は **[`docs/ios/macro.md`](docs/ios/macro.md)** を参照。
+HSMacro マクロパターン・ルーティング制約の詳細は **[`.claude/skills/arch-patterns/SKILL.md`](.claude/skills/arch-patterns/SKILL.md)** を参照。
 
 ### Network Layer
 
@@ -72,7 +73,7 @@ iosApp/iosApp/
 │   ├── Component/    # 複数画面で共通利用する UI パーツ
 │   └── ContentView.swift
 ├── Route/            # NavigationStack のパス遷移を表す Enum（AppDestination）
-├── viewModel/        # IosXxxViewModel
+├── ViewModel/        # IosXxxViewModel
 ├── Util/             # ユーティリティ
 └── Data/             # iOS 固有のデータ層
 ```
@@ -82,7 +83,12 @@ iosApp/iosApp/
 ローカライズは `Localizable.xcstrings`（Xcode 15+ 形式）で `ja` / `en` を一元管理する。
 
 - **キー定義**: `iosApp/iosApp/Util/LocalizedStringKey+App.swift` に `LocalizedStringKey` の extension として全キーを `static var` の computed property で定義する。
-- **`static let` は使用しない** — `LocalizedStringKey` は `Sendable` 非準拠のため、Swift 6 の concurrency チェックでエラーになる。
+- **使用方法**: SwiftUI では `Text(.navSearch)`、`Button(.buttonCancel)` のようにドット記法で参照する。
+- **`String` が必要な箇所**（ViewModel のエラー文字列など）は `String(localized: "key")` を使用する。
+- **キーの追加手順**:
+  1. `Localizable.xcstrings` に `ja` / `en` 両方のエントリを追加する。
+  2. `LocalizedStringKey+App.swift` に対応する `static var` を追加する。
+- **`static let` は使用しない** — `LocalizedStringKey` は `Sendable` 非準拠のため、Swift 6 の concurrency チェックでエラーになる。`static var { "key" }` の computed property で定義すること。
 
 ### iOS Framework Export
 
@@ -99,7 +105,8 @@ iosApp/iosApp/
 ## Testing
 
 ユニットテストの仕様・FakeRepository 一覧・追加手順は **[`docs/testing/test.md`](docs/testing/test.md)** を参照。
-テスト実装パターンは **[`.claude/skills/test-specs/SKILL.md`](.claude/skills/test-specs/SKILL.md)** を参照。
+テスト実装パターン（テンプレート・FakeRepository 作成パターン）は **[`.claude/skills/test-specs/SKILL.md`](.claude/skills/test-specs/SKILL.md)** を参照。
+UI テスト（Android Compose UI Tests / iOS XCUITests）は **[`docs/testing/uitest.md`](docs/testing/uitest.md)** を参照（Xcode / Android Studio から手動実行）。
 
 ### テスト実行
 
